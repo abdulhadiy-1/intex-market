@@ -1,13 +1,22 @@
-import { Select } from 'antd';
-import type { Dispatch, SetStateAction } from 'react';
+import { Select } from "antd";
+import type { Dispatch, SetStateAction } from "react";
 
 interface SearchSelectProps {
   placeholder?: string;
   onChange?: Dispatch<SetStateAction<number | null>>;
   value?: number | null;
+  options: {
+    value: number;
+    label: string;
+  }[];
 }
 
-const SearchSelect: React.FC<SearchSelectProps> = ({ placeholder, onChange, value }) => (
+const SearchSelect: React.FC<SearchSelectProps> = ({
+  placeholder,
+  onChange,
+  value,
+  options,
+}) => (
   <Select
     showSearch
     className="w-full !border-b-[1px]"
@@ -18,16 +27,11 @@ const SearchSelect: React.FC<SearchSelectProps> = ({ placeholder, onChange, valu
     placeholder={placeholder}
     optionFilterProp="label"
     filterSort={(optionA, optionB) =>
-      (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
+      (optionA?.label ?? "")
+        .toLowerCase()
+        .localeCompare((optionB?.label ?? "").toLowerCase())
     }
-    options={[
-      { value: 1, label: 'Not Identified' },
-      { value: 2, label: 'Closed' },
-      { value: 3, label: 'Communicated' },
-      { value: 4, label: 'Identified' },
-      { value: 5, label: 'Resolved' },
-      { value: 6, label: 'Cancelled' },
-    ]}
+    options={options}
   />
 );
 

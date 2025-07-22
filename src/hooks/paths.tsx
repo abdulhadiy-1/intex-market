@@ -1,7 +1,7 @@
-import { CreateAdmin, Login, NotFound } from "../page/Auth";
+import { Login, NotFound } from "../page/Auth";
 import { Category, Home, Order, Website } from "../page/Home";
 export const paths = {
-  home: '/',
+  home: "/",
   order: "/order",
   category: "/category",
   website: "/website",
@@ -18,16 +18,10 @@ export const AuthRouteList = [
   },
   {
     id: 2,
-    path: paths.createAdmin,
-    element: <CreateAdmin />,
-  },
-  {
-    id: 3,
     path: paths.notFound,
     element: <NotFound />,
   },
 ];
-
 
 export const HomeRouteList = [
   {
@@ -50,7 +44,7 @@ export const HomeRouteList = [
     path: paths.website,
     element: <Website />,
   },
-    {
+  {
     id: 5,
     path: paths.notFound,
     element: <NotFound />,

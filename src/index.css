@@ -21,7 +21,7 @@ body{
 }
 
 .containers{
-  max-width: 1300px;
+  max-width: 1200px;
   margin: auto;
 }
 
@@ -41,4 +41,8 @@ body{
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out;
+}
+
+.ant-input-password > input{
+  text-align: center;
 }
