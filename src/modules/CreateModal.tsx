@@ -1,5 +1,11 @@
 import { CloseOutlined } from "@ant-design/icons";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from "react";
 import {
   CategoryIcon,
   CountIcon,
@@ -19,11 +25,15 @@ import getRequest from "../service/getRequest";
 import type { CategoryType } from "../types/CategoryType";
 import toast, { Toaster } from "react-hot-toast";
 import { useCookies } from "react-cookie";
+import type { ProductType } from "../types/ProductType";
+import Modal from "../components/Modal";
 
 const CreateModal = ({
+  id,
   isOpen,
   setIsOpen,
 }: {
+  id?: number | null;
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
@@ -36,8 +46,36 @@ const CreateModal = ({
   const [frameUz, setFrameUz] = useState<string>("");
   const [size, setSize] = useState<string>("");
   const [depth, setDepth] = useState<string>("");
-  const [token, _setCookie, deleteCookie] = useCookies(["accessToken"])
+  const [token, _setCookie, deleteCookie] = useCookies(["accessToken"]);
   const queryClient = useQueryClient();
+
+  const { data: singleProduct } = useQuery<{ data: ProductType }>({
+    queryKey: ["product", id],
+    queryFn: () => getRequest(`/product/${id}`),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (singleProduct) {
+      setCategory(singleProduct.data.categoryId);
+      setStatus(
+        singleProduct.data.status == "recommended"
+          ? 1
+          : singleProduct.data.status == "discount"
+          ? 2
+          : singleProduct.data.status == "none"
+          ? 3
+          : 4
+      );
+      setCount(singleProduct.data.count);
+      setStartPrice(singleProduct.data.price);
+      setDiscountPrice(singleProduct.data.discountPrice);
+      setFrame(singleProduct.data.shape);
+      setFrameUz(singleProduct.data.shapeUzb);
+      setSize(singleProduct.data.size.toString());
+      setDepth(singleProduct.data.size.toString());
+    }
+  }, [singleProduct]);
 
   const statusOptions = [
     {
@@ -52,57 +90,62 @@ const CreateModal = ({
       value: 3,
       label: "Нет в наличии",
     },
+    {
+      value: 4,
+      label: "Доступно",
+    },
   ];
 
-  function resetForm() {
-  setCategory(null);
-  setStatus(null);
-  setCount(0);
-  setStartPrice(0);
-  setDiscountPrice(0);
-  setFrame("");
-  setFrameUz("");
-  setSize("");
-  setDepth("");
-  setFile(null);
-}
-
-
   const { mutate: ProductMutate } = useMutation({
-    mutationFn: (filename: string) =>
-      axios.post(`${API}/product`, {
+    mutationFn: (filename: string) => {
+      const resolvedStatus =
+        status === 1
+          ? "recommended"
+          : status === 2
+          ? "discount"
+          : status === 3
+          ? "none"
+          : "available";
+      const data = {
         price: startPrice,
         size: Number(size),
         shape: frame,
         shapeUzb: frameUz,
-        status:
-          status === 1
-            ? "recommended"
-            : status === 2
-            ? "discount"
-            : status === 3
-            ? "none"
-            : "available",
+        status: resolvedStatus,
         count,
         discountPrice,
         categoryId: category,
         image: filename.split("/")[4],
-      }, {headers: {Authorization: `Bearer ${token.accessToken}`}}),
-   onSuccess: () => {
-    toast.success("Создано")
-    resetForm()
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 300);
-    queryClient.invalidateQueries({ queryKey: ["products"] })
-  },
-  onError: (err: AxiosError) => {
-    if(err.status == 401){
-      deleteCookie("accessToken")
-    }
-    console.log(err);
-  },
-    
+      };
+
+      const config = {
+        headers: { Authorization: `Bearer ${token.accessToken}` },
+      };
+
+      if (id) {
+        return axios.patch(`${API}/product/${id}`, data, config);
+      } else {
+        return axios.post(`${API}/product`, data, config);
+      }
+    },
+
+    onSuccess: () => {
+      if (id) {
+        toast.success("Изменено");
+      } else {
+        toast.success("Создано");
+      }
+      setTimeout(() => setIsOpen(false), 300);
+      queryClient.invalidateQueries({ queryKey: ["products", category] });
+    },
+
+    onError: (err: AxiosError) => {
+      if (err.status === 401) {
+        deleteCookie("accessToken");
+      }
+      toast.error("Что то пошло не так");
+      console.error(err);
+    },
   });
 
   const { mutate: imageMutate, isPending } = useMutation({
@@ -113,18 +156,14 @@ const CreateModal = ({
         },
       }),
     onSuccess: (res) => {
-      if (!category) {
-        toast.error("Категория не выбрана");     
-        return;
-      }
       const filename = res.data.fileUrl;
-      
       ProductMutate(filename);
     },
     onError: (err) => {
-      console.log(err);
+      console.error(err);
     },
   });
+
   const { data } = useQuery<{ data: CategoryType[] }>({
     queryKey: ["category"],
     queryFn: () => getRequest("/category"),
@@ -139,18 +178,24 @@ const CreateModal = ({
     }
   };
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!file) {
-      toast.error("Файл не выбран");
+    if (!category) {
+      toast.error("Категория не выбрана");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    imageMutate(formData);
-  }
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      imageMutate(formData);
+    } else {
+      const filename = singleProduct?.data.image
+        ? `${API}/file/${singleProduct.data.image}`
+        : "";
+      ProductMutate(filename);
+    }
+  };
 
   const rows = [
     [
@@ -294,64 +339,52 @@ const CreateModal = ({
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      <div
-        className={`${
-          !isOpen && "hidden"
-        } absolute inset-0 backdrop-blur-[6px] bg-[#00000058] overflow-y-auto py-[30px] flex`}
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="px-[108px] relative py-[40px] bg-[var(--clr-bg)] mx-auto my-auto rounded-[35px] flex flex-col items-center text-[var(--clr-grey)]"
-        >
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute top-[40px] right-[40px] text-[35px] cursor-pointer"
-          >
-            <CloseOutlined />
-          </button>
-
-          <label>
-            <input onChange={handleChange} type="file" hidden />
-            <div className="flex items-center justify-center border-dashed border-[2px] bg-white border-[#3A3A3A] w-[691px] h-[316px] rounded-[21.73px] gap-[29px] cursor-pointer shadow-lg">
-              {file ? (
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt="preview"
-                  className="w-[90%] h-[90%] object-contain"
-                />
-              ) : (
-                <>
-                  <ImageIcon />
-                  <p className="text-[30px]">Выберите изображение</p>
-                </>
-              )}
-            </div>
-          </label>
-
-          {rows.map((row, i) => (
-            <div
-              key={i}
-              className="flex items-center mt-[33px] w-[1000px] justify-between"
-            >
-              {row.map((input, index) => (
-                <IconInput key={index} icon={input.icon} title={input.title}>
-                  {input.component}
-                </IconInput>
-              ))}
-            </div>
-          ))}
-          <div className="flex w-full justify-center pt-[33px]">
-            <Button
-              loading={isPending}
-              htmlType="submit"
-              type="primary"
-              className="!rounded-[25px] !text-[25px] w-[240px] !h-[50px]"
-            >
-              Добавить
-            </Button>
+      <Modal isOpen={isOpen} setIsOpen={setIsOpen} handleSubmit={handleSubmit}>
+        <label>
+          <input onChange={handleChange} type="file" hidden />
+          <div className="flex items-center justify-center border-dashed border-[2px] bg-white border-[#3A3A3A] w-[691px] h-[316px] rounded-[21.73px] gap-[29px] cursor-pointer shadow-lg">
+            {file || singleProduct?.data.image ? (
+              <img
+                src={
+                  file
+                    ? URL.createObjectURL(file)
+                    : `${API}/file/${singleProduct?.data.image}`
+                }
+                alt="preview"
+                className="w-[90%] h-[90%] object-contain"
+              />
+            ) : (
+              <>
+                <ImageIcon />
+                <p className="text-[30px]">Выберите изображение</p>
+              </>
+            )}
           </div>
-        </form>
-      </div>
+        </label>
+
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            className="flex items-center mt-[33px] w-[1000px] justify-between"
+          >
+            {row.map((input, index) => (
+              <IconInput key={index} icon={input.icon} title={input.title}>
+                {input.component}
+              </IconInput>
+            ))}
+          </div>
+        ))}
+        <div className="flex w-full justify-center pt-[33px]">
+          <Button
+            loading={isPending}
+            htmlType="submit"
+            type="primary"
+            className="!rounded-[25px] !text-[25px] w-[240px] !h-[50px]"
+          >
+            {id ? "Изменить" : "Добавить"}
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };

@@ -3,6 +3,9 @@ import { DeleteIcon, EditIcon } from "../assets/icons/icon";
 import { API } from "../hooks/getEnv";
 import type { ProductType } from "../types/ProductType";
 import getRequest from "../service/getRequest";
+import CreateModal from "./CreateModal";
+import { useState } from "react";
+import DeleteModal from "../components/deleteModal";
 
 const ProductTable = ({
   searchItem,
@@ -11,6 +14,10 @@ const ProductTable = ({
   activeCategory: number;
   searchItem?: string;
 }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [isOpenDelete, setIsOpenDelete] = useState<boolean>(false)
+  const [id, setId] = useState<number | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
   const { data, isLoading } = useQuery<{ data: ProductType[] }>({
     queryKey: ["products", activeCategory, searchItem],
     queryFn: () =>
@@ -124,7 +131,12 @@ const ProductTable = ({
                 style={{ width: `${100 / 7 - 8}%` }}
                 className="flex items-center justify-start gap-[18px]"
               >
-                <EditIcon /> <DeleteIcon />
+                <button onClick={() => {setIsOpen(true), setId(item.id)}} className="cursor-pointer">
+                <EditIcon /> 
+                </button>
+                <button onClick={() => {setIsOpenDelete(true), setDeleteId(item.id)}} className="cursor-pointer">
+                <DeleteIcon />
+                </button>
               </div>
             </div>
           ))}
@@ -134,6 +146,8 @@ const ProductTable = ({
           No data
         </div>
       )}
+      <CreateModal id={id} isOpen={isOpen} setIsOpen={setIsOpen} />
+      <DeleteModal isOpen={isOpenDelete} setIsOpen={setIsOpenDelete} id={deleteId}  />
     </div>
   );
 };

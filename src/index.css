@@ -15,6 +15,14 @@
 .ant-btn-primary{
   background-color: var(--clr-green) !important;
 }
+.ant-btn-primary:hover{
+  opacity: 90% !important;
+}
+
+.ant-btn-default:hover{
+  border: 1px solid var(--clr-green) !important;
+  color: var(--clr-green) !important;
+}
 
 body{
   overflow: hidden;
