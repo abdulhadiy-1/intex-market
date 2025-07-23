@@ -5,7 +5,7 @@ import type { ProductType } from "../types/ProductType";
 import getRequest from "../service/getRequest";
 import CreateModal from "./CreateModal";
 import { useState } from "react";
-import DeleteModal from "../components/deleteModal";
+import DeleteModal from "../components/DeleteModal";
 
 const ProductTable = ({
   searchItem,
