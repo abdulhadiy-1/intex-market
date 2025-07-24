@@ -8,8 +8,6 @@ const OrderTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cookie] = useCookies(["accessToken"]);
-      console.log(cookie)
-
 
   useEffect(() => {
     const fetchOrders = async () => {

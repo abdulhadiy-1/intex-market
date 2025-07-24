@@ -62,7 +62,7 @@ const Home = () => {
             </button>
           ))}
         </div>
-        <ProductTable searchItem={searchItem} activeCategory={active} />
+        <ProductTable searchItem={searchItem.trim()} activeCategory={active} />
       </div>
       <CreateModal isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>

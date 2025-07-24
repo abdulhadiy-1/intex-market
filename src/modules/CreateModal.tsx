@@ -73,7 +73,7 @@ const CreateModal = ({
       setFrame(singleProduct.data.shape);
       setFrameUz(singleProduct.data.shapeUzb);
       setSize(singleProduct.data.size.toString());
-      setDepth(singleProduct.data.size.toString());
+      setDepth(singleProduct.data.depth.toString());
     }
   }, [singleProduct]);
 
@@ -115,7 +115,8 @@ const CreateModal = ({
         count,
         discountPrice,
         categoryId: category,
-        image: filename.split("/")[4],
+        depth,
+        image: filename,
       };
 
       const config = {
@@ -191,7 +192,7 @@ const CreateModal = ({
       imageMutate(formData);
     } else {
       const filename = singleProduct?.data.image
-        ? `${API}/file/${singleProduct.data.image}`
+        ? singleProduct.data.image
         : "";
       ProductMutate(filename);
     }

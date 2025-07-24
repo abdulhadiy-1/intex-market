@@ -29,7 +29,7 @@ const ProductTable = ({
   });
 
   return (
-    <div>
+    <div className="!overflow-y-auto">
       <div className="flex w-full py-[17px] px-[50px] bg-white rounded-[30px] text-[20px] mb-[22px] justify-between">
         <div
           style={{ width: `${100 / 7 + 1}%` }}
@@ -98,10 +98,10 @@ const ProductTable = ({
                 className="leading-[100%]"
               >
                 <div className="relative inline-block">
-                  <p className="text-[16px] text-gray-600">{item.price}</p>
+                  <p className="text-[16px] text-gray-600">{new Intl.NumberFormat("de-DE").format(item.price)}</p>
                   <div className="absolute top-1/2 left-0 w-full h-[2px] bg-red-500 rotate-[7deg]"></div>
                 </div>
-                <p className="text-[20px] font-bold">{item.discountPrice}</p>
+                <p className="text-[20px] font-bold">{new Intl.NumberFormat("de-DE").format(item.discountPrice)}</p>
               </div>
               <div
                 style={{ width: `${100 / 7 - 1}%` }}
@@ -125,7 +125,7 @@ const ProductTable = ({
                 style={{ width: `${100 / 7}%` }}
                 className="flex items-center justify-start"
               >
-                {item.size}
+                {item.depth}
               </div>
               <div
                 style={{ width: `${100 / 7 - 8}%` }}

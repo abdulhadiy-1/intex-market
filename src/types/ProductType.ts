@@ -12,4 +12,5 @@ export interface ProductType {
   discountPrice: number;
   image: string;
   Category: CategoryType;
+  depth: string
 }
